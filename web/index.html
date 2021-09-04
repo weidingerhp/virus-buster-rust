@@ -1,0 +1,20 @@
+<html>
+<head>
+<title>Virus Buster - Rust Edition</title>
+</head>
+<body>
+<script type="module">
+  import init from "./virus_buster_rust.js";
+
+  document.getElementById('startgame').onclick = function () {
+    init("virus_buster_rust_bg.wasm").then(function (wasm) {
+      document.getElementById('startgame').hidden=true;
+      wasm.run();
+    });
+  }
+</script>
+
+<input type="button" value="Start Game" id="startgame"/>
+<div id="gamepanel"></div>
+</body>
+</html>

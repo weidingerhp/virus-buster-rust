@@ -1,5 +1,8 @@
+use std::panic;
+
 use bevy::prelude::*;
 use bevy_kira_audio::{AudioSource, Audio};
+use rand::{Rng, prelude::ThreadRng, thread_rng};
 
 use crate::GameStatus;
 
@@ -12,7 +15,7 @@ pub struct VirusAssets {
 pub struct VirusSpawner;
 
 pub struct VirusParticle {
-    is_hit:bool,
+    pub is_hit:bool,
     speed_x: f32,
     speed_y: f32,
     rotation: f32,
@@ -58,32 +61,54 @@ fn spawn_viruses(
         timer.tick(time.delta());
 
         if timer.just_finished() {
-            commands.entity(entity).insert(Timer::from_seconds(3., false));
+            let mut rng = thread_rng();
 
-            // Create new Virus Entity
-            commands.spawn_bundle(SpriteSheetBundle {
-                texture_atlas: virus_assets.virus.clone(),
-                sprite: TextureAtlasSprite {
-                    index: 1,
-                    ..Default::default()
-                },
-                transform: Transform {
-                    translation: Vec3::new(320., 100., 1.),
-                    scale: Vec3::new(0.5, 0.5, 1.),
-                    ..Default::default()
-                },
-                ..Default::default()
-            }).insert(VirusParticle {
-                is_hit: false,
-                speed_y: -0.1,
-                speed_x: -1.,
-                rotation: 0.02,
-            }).insert(Timer::from_seconds(0.02, true));
+            commands.entity(entity).insert(Timer::from_seconds(rng.gen_range(1. .. 4.), false));
 
-            audio.play(virus_assets.cough1.clone());
+            spawn_new_virus(rng, commands, virus_assets, audio);
         }
 
     }
+}
+
+fn spawn_new_virus(
+    mut rng: ThreadRng,
+    mut commands: Commands, 
+    virus_assets: Res<VirusAssets>, 
+    audio: Res<Audio>
+) {
+
+    // make random start-position and direction
+    
+    let height: f32 = rng.gen_range(50.0 .. 150.0);
+    let x_speed: f32 = rng.gen_range(-1.2 .. -0.8);
+    let y_speed: f32 = rng.gen_range(-0.2 .. 0.2);
+
+    let cough = match rng.gen_range(1 .. 3) {
+        1 => virus_assets.cough1.clone(),
+        2 => virus_assets.cough2.clone(),
+        _ => panic!("Not expected"),
+    };
+
+    commands.spawn_bundle(SpriteSheetBundle {
+        texture_atlas: virus_assets.virus.clone(),
+        sprite: TextureAtlasSprite {
+            index: rng.gen_range(0 .. 2),
+            ..Default::default()
+        },
+        transform: Transform {
+            translation: Vec3::new(320., height, 1.),
+            scale: Vec3::new(0.5, 0.5, 1.),
+            ..Default::default()
+        },
+        ..Default::default()
+    }).insert(VirusParticle {
+        is_hit: false,
+        speed_y: y_speed,
+        speed_x: x_speed,
+        rotation: 0.02,
+    }).insert(Timer::from_seconds(0.02, true));
+    audio.play(cough);
 }
 
 fn virus_fly_loop(
@@ -97,7 +122,7 @@ fn virus_fly_loop(
         timer.tick(time.delta());
         if timer.just_finished() {
             if virus.is_hit {
-                transform.translation.y -= 1.;
+                transform.translation.y -= 4.;
                 if transform.translation.y < -200. {
                     commands.entity(entity).despawn();
                 }

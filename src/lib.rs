@@ -1,6 +1,8 @@
 mod virus;
+mod injection;
 
 use bevy::{ecs::component::Component, prelude::*};
+use injection::InjectionPlugin;
 use virus::VirusPlugin;
 use wasm_bindgen::prelude::*;
 
@@ -27,6 +29,7 @@ pub fn run() {
     .add_plugins(DefaultPlugins)
     .add_plugin(bevy_kira_audio::AudioPlugin)
     .add_plugin(VirusPlugin)
+    .add_plugin(InjectionPlugin)
     .add_startup_system(game_init.system())
     .add_system(update_text_infected.system())
     .add_system(update_text_vaccinated.system());
